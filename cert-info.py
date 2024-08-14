@@ -7,7 +7,7 @@ import dns.resolver
 import requests
 
 
-# Function to get WHOIS information of an IP address using IPAPI.co API
+# Function to get IP information using IPAPI.co API
 def get_ipapi_info(ip_address):
     try:
         url = f"https://ipapi.co/{ip_address}/json/"
@@ -58,15 +58,15 @@ def get_ipapi_info(ip_address):
         }
 
 # Function to get SSL certificate information
-def get_cert_info(domain, ip_address=None):
+def get_cert_info(domain, end_point=None):
     try:
-        # Use provided IP address or resolve the domain
-        if not ip_address:
+        # Use provided end_point or resolve the domain
+        if not end_point:
             ip_addresses = dns.resolver.resolve(domain, 'A')
-            ip_address = ip_addresses[0].to_text()
+            end_point = ip_addresses[0].to_text()
 
         context = ssl.create_default_context()
-        with socket.create_connection((ip_address, 443)) as sock:
+        with socket.create_connection((end_point, 443)) as sock:
             with context.wrap_socket(sock, server_hostname=domain) as ssock:
                 cert = ssock.getpeercert(binary_form=True)
                 x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, cert)
@@ -86,14 +86,14 @@ def get_cert_info(domain, ip_address=None):
                 expiry_date = datetime.strptime(x509.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ')
                 
                 # Get IPAPI.co information of the IP address
-                ipapi_info = get_ipapi_info(ip_address)
+                ipapi_info = get_ipapi_info(end_point)
                 
                 return {
                     'domain': domain,
                     'common_name': common_name,
                     'san_names': ", ".join(san_names),
                     'expiry_date': expiry_date.strftime('%Y-%m-%d'),
-                    'ip_addresses': ip_address,
+                    'end_point': end_point,
                     'city': ipapi_info['city'],
                     'region': ipapi_info['region'],
                     'region_code': ipapi_info['region_code'],
@@ -119,7 +119,7 @@ def get_cert_info(domain, ip_address=None):
             'common_name': 'Error',
             'san_names': 'Error',
             'expiry_date': 'Error',
-            'ip_addresses': 'Error',
+            'end_point': end_point or 'Error',
             'city': 'Error',
             'region': 'Error',
             'region_code': 'Error',
@@ -139,20 +139,20 @@ def get_cert_info(domain, ip_address=None):
             'org': 'Error'
         }
 
-# Read the list of domains and optional IP addresses from the input CSV file
+# Read the list of domains and optional end_points from the input CSV file
 input_file = 'domains.csv'
 output_file = 'certificate_info.csv'
 
 with open(input_file, 'r') as csvfile:
     reader = csv.DictReader(csvfile)
-    domains = [row for row in reader]
+    domains = [row for row in reader if not row['domain'].startswith('#')]
 
 # Collect the certificate information for each domain
 cert_info_list = []
 for entry in domains:
     domain = entry['domain']
-    ip_address = entry.get('ip_address', None)
-    cert_info = get_cert_info(domain, ip_address)
+    end_point = entry.get('end_point', None)
+    cert_info = get_cert_info(domain, end_point)
     cert_info_list.append(cert_info)
 
 # Write the certificate information to the output CSV file
@@ -162,7 +162,7 @@ with open(output_file, 'w', newline='') as csvfile:
         'common_name', 
         'san_names', 
         'expiry_date', 
-        'ip_addresses',
+        'end_point',
         'city', 
         'region', 
         'region_code', 
