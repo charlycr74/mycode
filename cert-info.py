@@ -7,13 +7,10 @@ import dns.resolver
 import requests
 import sys
 
-# IPAPI.co API Configuration
-ipapi_token = 'YOUR_IPAPI_TOKEN'  # Replace with your IPAPI.co API token
-
 # Function to get IP information using IPAPI.co API
 def get_ipapi_info(ip_address):
     try:
-        url = f"https://ipapi.co/{ip_address}/json/?key={ipapi_token}"
+        url = f"https://ipapi.co/{ip_address}/json/"
         response = requests.get(url)
         data = response.json()
 
@@ -144,12 +141,12 @@ def get_cert_info(domain, end_point=None):
 
 # Main function to run the script
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python get_certificate_info.py <domains.csv>")
+    if len(sys.argv) != 3:
+        print("Usage: python get_certificate_info.py <domains.csv> <output.csv>")
         sys.exit(1)
 
     input_file = sys.argv[1]
-    output_file = 'certificate_info.csv'
+    output_file = sys.argv[2]
 
     with open(input_file, 'r') as csvfile:
         reader = csv.DictReader(csvfile)
