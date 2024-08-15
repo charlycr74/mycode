@@ -5,12 +5,15 @@ from OpenSSL import crypto
 from datetime import datetime
 import dns.resolver
 import requests
+import sys
 
+# IPAPI.co API Configuration
+ipapi_token = 'YOUR_IPAPI_TOKEN'  # Replace with your IPAPI.co API token
 
 # Function to get IP information using IPAPI.co API
 def get_ipapi_info(ip_address):
     try:
-        url = f"https://ipapi.co/{ip_address}/json/"
+        url = f"https://ipapi.co/{ip_address}/json/?key={ipapi_token}"
         response = requests.get(url)
         data = response.json()
 
@@ -139,52 +142,60 @@ def get_cert_info(domain, end_point=None):
             'org': 'Error'
         }
 
-# Read the list of domains and optional end_points from the input CSV file
-input_file = 'domains.csv'
-output_file = 'certificate_info.csv'
+# Main function to run the script
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: python get_certificate_info.py <domains.csv>")
+        sys.exit(1)
 
-with open(input_file, 'r') as csvfile:
-    reader = csv.DictReader(csvfile)
-    domains = [row for row in reader if not row['domain'].startswith('#')]
+    input_file = sys.argv[1]
+    output_file = 'certificate_info.csv'
 
-# Collect the certificate information for each domain
-cert_info_list = []
-for entry in domains:
-    domain = entry['domain']
-    end_point = entry.get('end_point', None)
-    cert_info = get_cert_info(domain, end_point)
-    cert_info_list.append(cert_info)
+    with open(input_file, 'r') as csvfile:
+        reader = csv.DictReader(csvfile)
+        domains = [row for row in reader if not row['domain'].startswith('#')]
 
-# Write the certificate information to the output CSV file
-with open(output_file, 'w', newline='') as csvfile:
-    fieldnames = [
-        'domain', 
-        'common_name', 
-        'san_names', 
-        'expiry_date', 
-        'end_point',
-        'city', 
-        'region', 
-        'region_code', 
-        'country', 
-        'country_code', 
-        'continent_code', 
-        'in_eu', 
-        'postal', 
-        'latitude', 
-        'longitude', 
-        'timezone', 
-        'utc_offset', 
-        'country_calling_code', 
-        'currency', 
-        'languages', 
-        'asn', 
-        'org'
-    ]
-    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-    
-    writer.writeheader()
-    for cert_info in cert_info_list:
-        writer.writerow(cert_info)
+    # Collect the certificate information for each domain
+    cert_info_list = []
+    for entry in domains:
+        domain = entry['domain']
+        end_point = entry.get('end_point', None)
+        cert_info = get_cert_info(domain, end_point)
+        cert_info_list.append(cert_info)
 
-print(f"Certificate information has been written to {output_file}")
+    # Write the certificate information to the output CSV file
+    with open(output_file, 'w', newline='') as csvfile:
+        fieldnames = [
+            'domain', 
+            'common_name', 
+            'san_names', 
+            'expiry_date', 
+            'end_point',
+            'city', 
+            'region', 
+            'region_code', 
+            'country', 
+            'country_code', 
+            'continent_code', 
+            'in_eu', 
+            'postal', 
+            'latitude', 
+            'longitude', 
+            'timezone', 
+            'utc_offset', 
+            'country_calling_code', 
+            'currency', 
+            'languages', 
+            'asn', 
+            'org'
+        ]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        for cert_info in cert_info_list:
+            writer.writerow(cert_info)
+
+    print(f"Certificate information has been written to {output_file}")
+
+if __name__ == "__main__":
+    main()
