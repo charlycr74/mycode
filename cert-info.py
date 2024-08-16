@@ -15,6 +15,8 @@ def get_cert_info(domain, end_point=None):
             end_point = ip_addresses[0].to_text()
 
         context = ssl.create_default_context()
+        
+        # Explicitly set the SNI hostname
         with socket.create_connection((end_point, 443)) as sock:
             with context.wrap_socket(sock, server_hostname=domain) as ssock:
                 cert = ssock.getpeercert(binary_form=True)
@@ -91,3 +93,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
