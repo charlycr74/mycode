@@ -57,15 +57,14 @@ def get_cert_info(domain, end_point=None):
 
 # Function to send data to Splunk
 def send_to_splunk(splunk_url, splunk_token, data):
+    # Include additional fields for Splunk
+    data['app_group'] = 'devops'
+    data['app_name'] = 'cert_info'
+    
     headers = {
         'Authorization': f'Splunk {splunk_token}',
         'Content-Type': 'application/json'
     }
-    
-    # Add app_group and app_name only to the data sent to Splunk
-    data['app_group'] = 'devops'
-    data['app_name'] = 'cert_info'
-    
     response = requests.post(splunk_url, headers=headers, data=json.dumps(data))
     return response.status_code, response.text
 
@@ -97,7 +96,7 @@ def main():
         if status_code != 200:
             print(f"Failed to send data to Splunk for domain {domain}. Response: {response_text}")
 
-    # Write the certificate information to the output CSV file without app_group and app_name
+    # Write the certificate information to the output CSV file
     with open(output_file, 'w', newline='') as csvfile:
         fieldnames = [
             'domain', 
