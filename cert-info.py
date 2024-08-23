@@ -43,7 +43,9 @@ def get_cert_info(domain, end_point=None):
                     'common_name': common_name,
                     'san_names': ", ".join(san_names),
                     'expiry_date': expiry_date.strftime('%Y-%m-%d'),
-                    'end_point': end_point
+                    'end_point': end_point,
+                    'app_group': 'devops',
+                    'app_name': 'cert_info'
                 }
 
     except Exception as e:
@@ -52,16 +54,15 @@ def get_cert_info(domain, end_point=None):
             'common_name': 'Error',
             'san_names': 'Error',
             'expiry_date': 'Error',
-            'end_point': end_point or 'Error'
+            'end_point': end_point or 'Error',
+            'app_group': 'devops',
+            'app_name': 'cert_info'
         }
 
 # Function to send data to Splunk
 def send_to_splunk(splunk_url, splunk_token, data):
-    # Include additional fields for Splunk
     event_data = {
-        'event': data,
-        'app_group': 'devops',
-        'app_name': 'cert_info'
+        'event': data
     }
     
     headers = {
