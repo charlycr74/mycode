@@ -24,36 +24,41 @@ def get_cert_info(domain, end_point=None):
                 cert = ssock.getpeercert(binary_form=True)
                 x509 = crypto.load_certificate(crypto.FILETYPE_ASN1, cert)
 
-                # Get the common name (CN)
-                common_name = x509.get_subject().CN
-
-                # Get the SAN names
-                san_names = []
-                for i in range(x509.get_extension_count()):
-                    ext = x509.get_extension(i)
-                    if ext.get_short_name() == b'subjectAltName':
-                        san_names = str(ext).replace("DNS:", "").split(", ")
-                        break
-
-                # Get the expiry date
-                expiry_date = datetime.strptime(x509.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ')
-
-                return {
+                # Extract certificate details excluding the certificate itself and private key
+                cert_info = {
                     'domain': domain,
-                    'common_name': common_name,
-                    'san_names': ", ".join(san_names),
-                    'expiry_date': expiry_date.strftime('%Y-%m-%d'),
+                    'common_name': x509.get_subject().CN,
+                    'issuer': x509.get_issuer().CN,
+                    'serial_number': x509.get_serial_number(),
+                    'version': x509.get_version(),
+                    'not_before': datetime.strptime(x509.get_notBefore().decode('ascii'), '%Y%m%d%H%M%SZ').strftime('%Y-%m-%d %H:%M:%S'),
+                    'not_after': datetime.strptime(x509.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ').strftime('%Y-%m-%d %H:%M:%S'),
+                    'san_names': '',
                     'end_point': end_point,
                     'app_group': 'devops',
                     'app_name': 'cert_info'
                 }
 
+                # Get the SAN names
+                for i in range(x509.get_extension_count()):
+                    ext = x509.get_extension(i)
+                    if ext.get_short_name() == b'subjectAltName':
+                        san_names = str(ext).replace("DNS:", "").split(", ")
+                        cert_info['san_names'] = ", ".join(san_names)
+                        break
+
+                return cert_info
+
     except Exception as e:
         return {
             'domain': domain,
             'common_name': 'Error',
+            'issuer': 'Error',
+            'serial_number': 'Error',
+            'version': 'Error',
+            'not_before': 'Error',
+            'not_after': 'Error',
             'san_names': 'Error',
-            'expiry_date': 'Error',
             'end_point': end_point or 'Error',
             'app_group': 'devops',
             'app_name': 'cert_info'
@@ -105,9 +110,13 @@ def main():
     with open(output_file, 'w', newline='') as csvfile:
         fieldnames = [
             'domain', 
-            'common_name', 
+            'common_name',
+            'issuer',
+            'serial_number',
+            'version',
+            'not_before',
+            'not_after',
             'san_names', 
-            'expiry_date', 
             'end_point'
         ]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
