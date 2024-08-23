@@ -61,6 +61,7 @@ def get_cert_info(domain, end_point=None):
 
 # Function to send data to Splunk
 def send_to_splunk(splunk_url, splunk_token, data):
+    # Prepare the event data for Splunk
     event_data = {
         'event': data
     }
@@ -113,7 +114,9 @@ def main():
         
         writer.writeheader()
         for cert_info in cert_info_list:
-            writer.writerow(cert_info)
+            # Remove 'app_group' and 'app_name' before writing to CSV
+            cert_info_for_csv = {k: cert_info[k] for k in fieldnames}
+            writer.writerow(cert_info_for_csv)
 
     print(f"Certificate information has been written to {output_file} and sent to Splunk")
 
