@@ -43,9 +43,7 @@ def get_cert_info(domain, end_point=None):
                     'common_name': common_name,
                     'san_names': ", ".join(san_names),
                     'expiry_date': expiry_date.strftime('%Y-%m-%d'),
-                    'end_point': end_point,
-                    'app_group': 'devops',
-                    'app_name': 'cert_info'
+                    'end_point': end_point
                 }
 
     except Exception as e:
@@ -54,18 +52,23 @@ def get_cert_info(domain, end_point=None):
             'common_name': 'Error',
             'san_names': 'Error',
             'expiry_date': 'Error',
-            'end_point': end_point or 'Error',
-            'app_group': 'devops',
-            'app_name': 'cert_info'
+            'end_point': end_point or 'Error'
         }
 
 # Function to send data to Splunk
 def send_to_splunk(splunk_url, splunk_token, data):
+    # Include additional fields for Splunk
+    event_data = {
+        'event': data,
+        'app_group': 'devops',
+        'app_name': 'cert_info'
+    }
+    
     headers = {
         'Authorization': f'Splunk {splunk_token}',
         'Content-Type': 'application/json'
     }
-    response = requests.post(splunk_url, headers=headers, data=json.dumps(data))
+    response = requests.post(splunk_url, headers=headers, data=json.dumps(event_data))
     return response.status_code, response.text
 
 # Main function to run the script
@@ -103,9 +106,7 @@ def main():
             'common_name', 
             'san_names', 
             'expiry_date', 
-            'end_point',
-            'app_group',
-            'app_name'
+            'end_point'
         ]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         
