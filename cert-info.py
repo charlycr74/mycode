@@ -33,18 +33,18 @@ def get_cert_info(domain, end_point=None):
                     'version': x509.get_version(),
                     'not_before': datetime.strptime(x509.get_notBefore().decode('ascii'), '%Y%m%d%H%M%SZ').strftime('%Y-%m-%d %H:%M:%S'),
                     'not_after': datetime.strptime(x509.get_notAfter().decode('ascii'), '%Y%m%d%H%M%SZ').strftime('%Y-%m-%d %H:%M:%S'),
-                    'san_names': '',
+                    'san_names': [],
                     'end_point': end_point,
                     'app_group': 'devops',
                     'app_name': 'cert_info'
                 }
 
-                # Get the SAN names
+                # Get the SAN names as an array
                 for i in range(x509.get_extension_count()):
                     ext = x509.get_extension(i)
                     if ext.get_short_name() == b'subjectAltName':
                         san_names = str(ext).replace("DNS:", "").split(", ")
-                        cert_info['san_names'] = ", ".join(san_names)
+                        cert_info['san_names'] = san_names
                         break
 
                 return cert_info
@@ -58,7 +58,7 @@ def get_cert_info(domain, end_point=None):
             'version': 'Error',
             'not_before': 'Error',
             'not_after': 'Error',
-            'san_names': 'Error',
+            'san_names': [],
             'end_point': end_point or 'Error',
             'app_group': 'devops',
             'app_name': 'cert_info'
@@ -125,6 +125,10 @@ def main():
         for cert_info in cert_info_list:
             # Remove 'app_group' and 'app_name' before writing to CSV
             cert_info_for_csv = {k: cert_info[k] for k in fieldnames}
+
+            # Convert san_names to a string for CSV output
+            cert_info_for_csv['san_names'] = ", ".join(cert_info_for_csv['san_names'])
+            
             writer.writerow(cert_info_for_csv)
 
     print(f"Certificate information has been written to {output_file} and sent to Splunk")
