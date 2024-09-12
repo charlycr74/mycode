@@ -1,0 +1,4 @@
+index=your_index
+| stats latest(common_name) as common_name, latest(domain) as domain, latest(end_point) as end_point, latest(san_names) as san_names, latest(not_before) as not_before, latest(not_after) as not_after by common_name, domain, end_point
+| eval expiry_days = round((strptime(not_after, "%Y-%m-%d %H:%M:%S") - now()) / 86400)
+| table common_name, domain, end_point, san_names, not_before, not_after, expiry_days
